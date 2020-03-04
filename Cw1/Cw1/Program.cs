@@ -16,7 +16,7 @@ namespace Cw1
             if (result.IsSuccessStatusCode)
             {
                 string html = await result.Content.ReadAsStringAsync();
-                var regex = new Regex("[a-z]+[a-z0-9]*@[a-z0-9]+\\.[a-z]",
+                var regex = new Regex("[a-z]+[a-z0-9]*@[a-z0-9]+\\.[a-z]+\\.[a-z]*",
                 RegexOptions.IgnoreCase);
 
                 MatchCollection matches = regex.Matches(html);
