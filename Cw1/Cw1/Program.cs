@@ -1,34 +1,62 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Cw1
+namespace cw1
 {
-    class Program
+    public class Program
     {
         public static async Task Main(string[] args)
         {
-            //Console.WriteLine("Hello World!");
-
-            var client = new HttpClient();
-            var result = await client.GetAsync("https://www.pja.edu.pl");
-            if (result.IsSuccessStatusCode)
+            if (args == null || args.Length == 0)
             {
-                string html = await result.Content.ReadAsStringAsync();
-                var regex = new Regex("[a-z]+[a-z0-9]*@[a-z0-9]+\\.[a-z]+\\.[a-z]*",
-                RegexOptions.IgnoreCase);
-
-                MatchCollection matches = regex.Matches(html);
-                foreach (var m in matches)
-                {
-                    Console.WriteLine(m.ToString());                }
+                throw new ArgumentNullException();
             }
 
-            // var response = await httpClient.GetAsync(args[0]);
+            if (!Uri.IsWellFormedUriString(args[0], UriKind.Absolute))
+            {
+                throw new ArgumentException();
+            }
 
-            Console.WriteLine("END!");
+            var httpClient = new HttpClient();
 
+            try
+            {
+                HttpResponseMessage res = await httpClient.GetAsync(args[0]);
+                httpClient.Dispose();
+
+                if (res.IsSuccessStatusCode)
+                {
+                    string html = await res.Content.ReadAsStringAsync();
+                    var emailRegex = new Regex(@"\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*", RegexOptions.IgnoreCase);
+                    var matches = emailRegex.Matches(html).OfType<Match>().Select(val => val.Value).Distinct();
+                    if (matches.Any())
+                    {
+                        foreach (var m in matches)
+                        {
+                            Console.WriteLine(m);
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("Nie znaleziono adresów email");
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("Kod odpowiedzi nie pozytywny " + res.StatusCode);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine("Błąd w czasie pobierania strony");
+            }
+
+            Console.WriteLine("Koniec!");
         }
     }
 }
